@@ -1,21 +1,159 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AI Medya Stüdyosu</title>
+    <title>AI Ses Stüdyosu</title>
     <style>
-        body { font-family: Arial; text-align: center; padding: 20px; }
-        button { background: black; color: white; padding: 10px; border: none; }
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #audioPlayer {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 15px 0;
+        }
+        .voice-options {
+            margin: 15px 0;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <h1>🎵 MP3'ten Klip Yap!</h1>
-    <p>Şarkı sözünü yaz, AI seslendirsin, klip oluştur.</p>
-    <textarea id="lyrics" placeholder="Şarkı sözü yaz..."></textarea><br>
-    <button onclick="generateSong()">OLUŞTUR</button>
+    <div class="container">
+        <h1>🎤 AI Seslendirme Stüdyosu</h1>
+        <p>Metninizi yazın, ElevenLabs AI ile profesyonel seslendirme yapın:</p>
+        
+        <div class="voice-options">
+            <label for="voiceSelect">Ses Seçin:</label>
+            <select id="voiceSelect">
+                <option value="21m00Tcm4TlvDq8ikWAM">Erkek Ses (Genç)</option>
+                <option value="AZnzlk1XvdvUeBnXmlld">Kadın Ses (Olgun)</option>
+                <option value="EXAVITQu4vr4xnSDxMaL">Erkek Ses (Dinamik)</option>
+            </select>
+        </div>
+        
+        <textarea id="lyrics" placeholder="Örneğin: 'Güneşin doğuşuyla uyandım, bugün harika bir gün olacak...'"></textarea>
+        
+        <button onclick="generateSong()">🔊 SESLENDİR</button>
+        
+        <div class="loading" id="loading">
+            <p>⏳ Ses oluşturuluyor, lütfen bekleyin...</p>
+        </div>
+        
+        <audio id="audioPlayer" controls></audio>
+    </div>
+
+    <div class="footer">
+        <p>AI Ses Stüdyosu | ElevenLabs API Entegrasyonu</p>
+    </div>
+
     <script>
-        function generateSong() {
-            alert("Şimdi ElevenLabs & Suno'ya yönlendiriliyorsunuz!");
-            window.open("https://elevenlabs.io");
+        // ElevenLabs API Key
+        const apiKey = "sk_60a44fbd384b1cc4a11c9d7751e7bf77104e9d86e86a7b48";
+        
+        async function generateSong() {
+            const lyrics = document.getElementById("lyrics").value;
+            const voiceId = document.getElementById("voiceSelect").value;
+            const loadingElement = document.getElementById("loading");
+            const audioPlayer = document.getElementById("audioPlayer");
+            
+            if (!lyrics) {
+                alert("Lütfen seslendirmek için bir metin girin!");
+                return;
+            }
+            
+            try {
+                // Yükleme göstergesini aç
+                loadingElement.style.display = "block";
+                audioPlayer.style.display = "none";
+                
+                const response = await fetch(
+                    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "xi-api-key": apiKey,
+                            "Content-Type": "application/json",
+                            "accept": "audio/mpeg"
+                        },
+                        body: JSON.stringify({
+                            text: lyrics,
+                            voice_settings: {
+                                stability: 0.5,
+                                similarity_boost: 0.8
+                            }
+                        })
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Ses oluşturulamadı: ${response.status}`);
+                }
+                
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                audioPlayer.src = audioUrl;
+                audioPlayer.style.display = "block";
+                loadingElement.style.display = "none";
+                
+            } catch (error) {
+                loadingElement.style.display = "none";
+                alert("Hata: " + error.message);
+                console.error("API Hatası:", error);
+            }
         }
     </script>
 </body>
